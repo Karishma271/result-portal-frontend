@@ -1,60 +1,49 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ApiService } from '../../services/api.service';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Component({
   selector: 'app-admin-dashboard',
-  templateUrl: './admin-dashboard.component.html',
-  styleUrls: ['./admin-dashboard.component.scss']
+  templateUrl: './admin-dashboard.component.html'
 })
 export class AdminDashboardComponent {
-  uploadForm!: FormGroup;
-  selectedFile: File | null = null;
-  success: string = '';
-  error: string = '';
+  uploadForm: FormGroup;
+  file: File | null = null;
+  success = false;
+  error = false;
 
-  constructor(private fb: FormBuilder, private api: ApiService) {
+  constructor(private fb: FormBuilder, private http: HttpClient) {
     this.uploadForm = this.fb.group({
       uid: ['', Validators.required],
-      grade: ['', Validators.required],
-      name: ['', Validators.required],
-      file: [null, Validators.required]
+      grade: ['', Validators.required]
     });
   }
 
   onFileChange(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      this.selectedFile = file;
-    }
+    this.file = event.target.files[0];
   }
 
   upload() {
-    this.success = '';
-    this.error = '';
-
-    if (this.uploadForm.invalid || !this.selectedFile) {
-      this.error = 'All fields and a PDF file are required.';
-      return;
-    }
+    if (!this.file) return;
 
     const formData = new FormData();
     formData.append('uid', this.uploadForm.value.uid);
     formData.append('grade', this.uploadForm.value.grade);
-    formData.append('name', this.uploadForm.value.name);
-    formData.append('file', this.selectedFile);
+    formData.append('file', this.file);
 
-    const token = localStorage.getItem('token') || '';
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    this.api.uploadStudent(formData, token).subscribe({
-      next: () => {
-        this.success = 'Student record uploaded successfully!';
-        this.uploadForm.reset();
-        this.selectedFile = null;
-      },
-      error: () => {
-        this.error = 'Upload failed. Please check your input or token.';
-      }
-    });
+    this.http.post('https://result-portal-backend.onrender.com/api/admin/upload', formData, { headers })
+      .subscribe({
+        next: () => {
+          this.success = true;
+          this.error = false;
+        },
+        error: () => {
+          this.success = false;
+          this.error = true;
+        }
+      });
   }
 }

@@ -1,45 +1,36 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ApiService } from '../../services/api.service';
+import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-student-result',
-  templateUrl: './student-result.component.html',
-  styleUrls: ['./student-result.component.scss']
+  templateUrl: './student-result.component.html'
 })
-export class StudentResultComponent implements OnInit {
-  resultForm!: FormGroup;
-  grades: number[] = [3, 4, 5, 6, 7, 8];
-  pdfUrl: string = '';
-  error: string = '';
+export class StudentResultComponent {
+  resultForm: FormGroup;
+  pdfUrl: string | null = null; 
+  notFound = false;
+  grades: string[] = ['3', '4', '5', '6', '7', '8'];
 
-  constructor(private fb: FormBuilder, private api: ApiService) {}
-
-  ngOnInit(): void {
+  constructor(private fb: FormBuilder, private http: HttpClient, private sanitizer: DomSanitizer) {
     this.resultForm = this.fb.group({
-      grade: ['', Validators.required],
-      uid: ['', [Validators.required, Validators.maxLength(12)]]
+      uid: ['', Validators.required],
+      grade: ['', Validators.required]
     });
   }
 
   viewResult() {
-    this.error = '';
-    this.pdfUrl = '';
-
-    if (this.resultForm.invalid) return;
-
     const { uid, grade } = this.resultForm.value;
+    this.http.get<any>(`https://result-portal-backend.onrender.com/api/student/view?uid=${uid}&grade=${grade}`).subscribe({
+      next: (res) => {
+        this.notFound = false;
+        this.pdfUrl = `https://result-portal-backend.onrender.com/api/student/pdf/${res.pdfFilename}`;
 
-    this.api.viewStudent(uid, grade).subscribe({
-      next: (res: any) => {
-        if (res.pdfFilename) {
-          this.pdfUrl = `https://result-portal-backend.onrender.com/api/student/pdf/${res.pdfFilename}`;
-        } else {
-          this.error = 'Result not found. Please check your UID or standard.';
-        }
       },
       error: () => {
-        this.error = 'Unable to fetch result. Please try again.';
+        this.pdfUrl = null;
+        this.notFound = true;
       }
     });
   }
