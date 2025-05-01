@@ -1,0 +1,36 @@
+<div class="container mt-5">
+    <div class="card p-4 shadow-sm mx-auto" style="max-width: 600px;">
+      <h4 class="text-center mb-4">Upload Student Marksheet</h4>
+  
+      <form [formGroup]="uploadForm" (ngSubmit)="upload()" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label for="grade" class="form-label">Grade</label>
+          <select id="grade" class="form-select" formControlName="grade">
+            <option value="">-- Select Grade --</option>
+            <option *ngFor="let g of [3, 4, 5, 6, 7, 8]" [value]="g">Std {{ g }}</option>
+          </select>
+        </div>
+  
+        <div class="mb-3">
+          <label for="uid" class="form-label">Student UID</label>
+          <input type="text" id="uid" formControlName="uid" class="form-control" placeholder="Enter UID">
+        </div>
+  
+        <div class="mb-3">
+          <label for="name" class="form-label">Student Name</label>
+          <input type="text" id="name" formControlName="name" class="form-control" placeholder="Enter student name">
+        </div>
+  
+        <div class="mb-3">
+          <label for="file" class="form-label">Upload Marksheet (PDF)</label>
+          <input type="file" id="file" (change)="onFileChange($event)" accept="application/pdf" class="form-control">
+        </div>
+  
+        <button type="submit" class="btn btn-success w-100" [disabled]="uploadForm.invalid">Upload</button>
+      </form>
+  
+      <div *ngIf="success" class="alert alert-success mt-3 text-center">{{ success }}</div>
+      <div *ngIf="error" class="alert alert-danger mt-3 text-center">{{ error }}</div>
+    </div>
+  </div>
+  
